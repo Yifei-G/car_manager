@@ -8,4 +8,6 @@ router.get('/:id/detail', userController.userDetail);
 
 router.post('/create', userController.userCreate);
 
+router.put('/:id/update/', userController.update);
+
 module.exports = router;
