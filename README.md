@@ -10,6 +10,9 @@ Each user can have a list of cars.The objective of this project is to get famili
 
 List all the cars. 
 ```
+Query:
+http://localhost:30000/car/all
+
 
 Response:
 {
@@ -44,10 +47,16 @@ Response:
 ```
 
 /car/:id/detail  (GET)
+
 get all the information of a specific car
 
-Response:
+
 ```
+Query:
+http://localhost:30000/car/5fe276b6d15444804510bcd2/detail
+
+
+Response:
 {
     "car": {
         "URL": "/car/5fe276b6d15444804510bcd2/detail",
@@ -70,11 +79,29 @@ carModel
 Example:
 
 ```
+Query:
+http://localhost:30000/car/create
+
+Body:
+ {
+        "carBrand": "Tesla",
+        "carModel": "T1",
+        "productYear": "2010-01-01T00:00:00.000Z",
+        "convertible": true
+}
+
+
+
+Response:
 {
-    "carBrand": "Volkswagen",
-    "carModel": "Golf3",
-    "productYear": "1998-01-01T00:00:00.000Z",
-    "convertible": false
+    "newCar": {
+        "URL": "/car/5fe5e50d50fd6f5528726d54/detail",
+        "carBrand": "Tesla",
+        "carModel": "T1",
+        "carFullname": "Tesla - T1",
+        "productYear": "2010-01-01T00:00:00.000Z",
+        "convertible": true
+    }
 }
 ```
 
@@ -85,10 +112,26 @@ Update a specific Car:
 
 Example:
 ```
+Query:
+http://localhost:30000/car/5fe276b6d15444804510bcd2/update
+
+
+Body:
 {
-    "carBrand": "Volkswagen",
+    "carBrand": "volkswagen",
     "carModel": "e-Golf",
     "productYear": "1988-01-01T00:00:00.000Z"
+}
+
+Response:
+{
+    "modifiedCar": {
+        "URL": "/car/5fe276b6d15444804510bcd2/detail",
+        "carBrand": "volkswagen",
+        "carModel": "e-Golf",
+        "carFullname": "volkswagen - e-Golf",
+        "productYear": "1988-01-01T00:00:00.000Z"
+    }
 }
 ```
 
@@ -96,10 +139,110 @@ car/:id/delete (DELETE)
 
 Delete a specific Car
 
-Response:
 ```
+Response:
 {
     "message": "Car deleted successfully"
+}
+```
+
+users/:id/detail (GET)
+
+Get all information about a user
+
+```
+Query:
+http://localhost:30000/users/5fe3e218bcf67148aa006050/detail
+
+
+Response:
+{
+    "user": {
+        "firstName": "Rotsen",
+        "lastName": "santiago",
+        "email": "rotsen_santi@test.com",
+        "gender": "Male",
+        "URL": "/users/5fe3e218bcf67148aa006050/detail",
+        "car": [
+            {
+                "carBrand": "SEAT",
+                "carModel": "Leon",
+                "URL": "/car/5fdfb56ccb14c32bae505eef/detail",
+                "fullName": "SEAT - Leon"
+            },
+            {
+                "carBrand": "Chevrolet",
+                "carModel": "CAMARO",
+                "URL": "/car/5fdfb56ccb14c32bae505ee5/detail",
+                "fullName": "Chevrolet - CAMARO"
+            }
+        ]
+    }
+}
+```
+
+users/create
+
+Create a new user
+
+```
+Query:
+http://localhost:30000/users/create
+
+Body:
+{
+     "firstName": "Alicia",
+        "lastName": "Martinez",
+        "email": "alicia_martinez@test.com",
+        "gender": "Female",
+        "car": []
+}
+
+Response:
+{
+    "newUser": {
+        "firstName": "Alicia",
+        "lastName": "Martinez",
+        "email": "alicia_martinez@test.com",
+        "gender": "Female",
+        "URL": "/users/5fe5e36650fd6f5528726d53/detail",
+        "car": []
+    }
+}
+```
+
+
+
+users/:id/update
+
+Update an existent user profile
+
+```
+Query:
+http://localhost:30000/users/5fe3e218bcf67148aa006050/update
+
+Body:
+{
+     "firstName": "Rotsen",
+        "lastName": "santiago",
+        "email": "rotsen_santi@test.com",
+        "gender": "Male",
+        "car": []
+}
+
+Response:
+{
+    "updatedUser": {
+        "firstName": "rotsen",
+        "lastName": "santiago",
+        "email": "rotsen_santi@test.com",
+        "gender": "Male",
+        "URL": "/users/5fe3e218bcf67148aa006050/detail",
+        "car": [
+            "5fdfb56ccb14c32bae505eef",
+            "5fdfb56ccb14c32bae505ee5"
+        ]
+    }
 }
 ```
 
