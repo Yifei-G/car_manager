@@ -71,34 +71,73 @@ exports.userCreate = [
     body('car.*').escape(),
     
     (req, res, next) =>{
-        // Extract the validation errors from a request.
-        const errors = validationResult(req);
-        
-        if(!errors.isEmpty()){
-            // There are errors. Render form again with sanitized values/errors messages.
-            res.json({
-                errors
-            });
-            return;
-        }
-        else{
-            // Data from form is valid.
-            // Create an User object with escaped and trimmed data.
-            var user = new User({
-                firstName: req.body.firstName,
-                lastName: req.body.lastName,
-                email: req.body.email,
-                gender: req.body.gender,
-                car: req.body.car
-            });
-            user.save(function (err, result){
-                if(err) {return next(err)}
-                // Successful - return to the new user object
-                res.json({
-                    newUser: buildUser(user),
+        async.waterfall([
+            function(callback){
+                // Extract the validation errors from a request.
+                const errors = validationResult(req);
+                if(!errors.isEmpty()){
+                    // There are errors. Render form again with sanitized values/errors messages.
+                    res.json({
+                        errors
+                    });
+                    return;
+                }
+                else{
+                    callback(null)
+                }
+            },
+            
+            function(callback){
+                if(req.body.car.length > 0){
+                    let IDchecks = 0;
+                    let allValidID = true;
+                    // prevent user uploading non-existent Car IDs to the DB
+                    req.body.car.forEach(carID =>{
+                        Car.findById(carID, function(err, result){
+                            if (err) { return next(err); }
+                            if(!result){
+                                res.json({
+                                    message: `The car with ID ${carID} does not exist!!`,
+                                });
+                                allValidID = false;
+                            }
+                            IDchecks++;
+                            if((IDchecks == req.body.car.length) && allValidID){
+                                callback(null)
+                            }
+                        });
+                    });   
+                }
+                else{
+                    callback(null);
+                }
+                
+            },
+
+            function(callback){
+                var user = new User({
+                    firstName: req.body.firstName,
+                    lastName: req.body.lastName,
+                    email: req.body.email,
+                    gender: req.body.gender,
+                    car: req.body.car
                 });
-            });
-        }
+                callback(null,user);
+            },
+            
+        ], function(err, newUser){
+            if (err) { return next(err); }
+            else{
+                newUser.save(function (err, result){
+                    if(err) {return next(err)}
+                    // Successful - return to the new user object
+                    res.json({
+                        newUser: buildUser(newUser),
+                    });
+                });
+            }
+        });
+
     }
 ];
 
@@ -163,12 +202,13 @@ exports.update = [
                     callback(null, dbUser);
                 }
             },
-
+            
             function(dbUser, callback){
                 // if user didn't update the car list
                 // then we don't do the following checks
                 if((dbUser.car.length > 0) && (req.body.car.length > 0)) {
                     let IDchecks = 0;
+                    let allValidID = true;
                     // prevent user uploading non-existent Car IDs to the DB
                     dbUser.car.forEach(carID =>{
                         Car.findById(carID, function(err, result){
@@ -177,9 +217,10 @@ exports.update = [
                                 res.json({
                                     message: `The car with ID ${carID} does not exist!!`,
                                 })
+                                allValidID = false;
                             }
                             IDchecks++;
-                            if(IDchecks == dbUser.car.length){
+                            if((IDchecks == dbUser.car.length) && allValidID){
                                 callback(null, dbUser)
                             }
                         })
@@ -192,7 +233,6 @@ exports.update = [
             
             // updating all the field of the User object
             function(dbUser, callback){
-                console.log("before NEW:" + dbUser.car);
                 var modifiedUser = new User({
                     firstName : req.body.firstName,
                     lastName : req.body.lastName,
