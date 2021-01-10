@@ -1,5 +1,7 @@
 var createError = require('http-errors');
 var express = require('express');
+//Allow requests from all the origins!!
+var cors = require('cors');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
@@ -17,6 +19,8 @@ var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
 var app = express();
+
+app.use(cors());
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
