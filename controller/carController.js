@@ -141,7 +141,7 @@ exports.carUpdate = [
 
                 // Successful - return to the updated car object
                 res.json({
-                    modifiedCar: buildCar(updatedCar)
+                    modifiedCar: buildCar(car)
                 });
             });
         }
