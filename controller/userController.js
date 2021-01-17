@@ -1,6 +1,7 @@
 var User = require('../models/userModel');
 var Car = require('../models/carModel');
 var async = require('async');
+var bcrypt = require('bcrypt');
 const { body,validationResult } = require('express-validator');
 
 function buildUser (dbData){
@@ -36,6 +37,12 @@ function buildUser (dbData){
     return user;
 };
 
+async function passwordHash(userPassword){
+    const salt = 10;
+    hashedPassword = await bcrypt.hash(userPassword,salt);
+    return hashedPassword;
+}
+
 exports.userDetail = function(req, res, next){
     User.findById(req.params.id)
     .populate('car','carBrand carModel')
@@ -67,6 +74,7 @@ exports.userCreate = [
     body('firstName', 'first name can not be empty').trim().isLength({min:1}).escape(),
     body('lastName', 'last name can not be empty').trim().isLength({min:1}).escape(),
     body('email','the email address is invalid!').isEmail().escape(),
+    body('password','the password must be at least 8 characters').trim().isLength({min:8}).escape(),
     body('gender', 'gender is invalid').optional({checkFalsy:true}).trim().isLength({min:1}).escape(),
     body('car.*').escape(),
     
@@ -115,19 +123,25 @@ exports.userCreate = [
             },
 
             function(callback){
-                var user = new User({
-                    firstName: req.body.firstName,
-                    lastName: req.body.lastName,
-                    email: req.body.email,
-                    gender: req.body.gender,
-                    car: req.body.car
+                //hashing user's password
+                const user = passwordHash(req.body.password).then(function(hashedPassword){
+                    return new User({
+                        firstName: req.body.firstName,
+                        lastName: req.body.lastName,
+                        email: req.body.email,
+                        password: hashedPassword,
+                        gender: req.body.gender,
+                        car: req.body.car
+                    });
                 });
                 callback(null,user);
             },
             
-        ], function(err, newUser){
+        ], async function(err, user){
             if (err) { return next(err); }
             else{
+                    //user is a Promise, and should be resolved
+                    const newUser = await user;
                 newUser.save(function (err, result){
                     if(err) {return next(err)}
                     // Successful - return to the new user object
@@ -146,6 +160,7 @@ exports.update = [
     body('firstName', 'first name can not be empty').trim().isLength({min:1}).escape(),
     body('lastName', 'last name can not be empty').trim().isLength({min:1}).escape(),
     body('email','the email address is invalid!').isEmail().escape(),
+    body('password','the password must be at least 8 characters').trim().isLength({min:8}).escape(),
     body('gender', 'gender is invalid').optional({checkFalsy:true}).trim().isLength({min:1}).escape(),
     body('car.*').escape(),
     
@@ -233,20 +248,25 @@ exports.update = [
             
             // updating all the field of the User object
             function(dbUser, callback){
-                var modifiedUser = new User({
-                    firstName : req.body.firstName,
-                    lastName : req.body.lastName,
-                    email : req.body.email,
-                    gender : req.body.gender,
-                    car : dbUser.car,
-                    _id : req.params.id
+                //hashing user's password
+                const modifiedUser = passwordHash(req.body.password).then(function(hashedPassword){
+                    return new User({
+                        firstName: req.body.firstName,
+                        lastName: req.body.lastName,
+                        email: req.body.email,
+                        password: hashedPassword,
+                        gender: req.body.gender,
+                        car : dbUser.car,
+                        _id : req.params.id
+                    });
                 });
                 console.log(modifiedUser);
                 callback(null,modifiedUser);
             },
-        ], function(err, modifiedUser){
+        ], async function(err, user){
             if (err) { return next(err); }
             else{
+                    modifiedUser = await user;
                 User.findByIdAndUpdate(req.params.id, modifiedUser, {}, function(err){
                     if(err){return next(err);}
                     res.json({
