@@ -10,4 +10,6 @@ router.post('/create', userController.userCreate);
 
 router.put('/:id/update/', userController.update);
 
+router.post('/login', userController.login);
+
 module.exports = router;

@@ -43,6 +43,11 @@ async function passwordHash(userPassword){
     return hashedPassword;
 }
 
+async function checkPassword(userPassword, hashedPassword){
+    const result = await bcrypt.compare(userPassword, hashedPassword);
+    return result;
+}
+
 exports.userDetail = function(req, res, next){
     User.findById(req.params.id)
     .populate('car','carBrand carModel')
@@ -142,7 +147,7 @@ exports.userCreate = [
             else{
                     //user is a Promise, and should be resolved
                     const newUser = await user;
-                newUser.save(function (err, result){
+                    newUser.save(function (err, result){
                     if(err) {return next(err)}
                     // Successful - return to the new user object
                     res.json({
@@ -188,7 +193,6 @@ exports.update = [
                     if(err) {return next(err)};
                     if(result){
                         //return the user to the next function of the waterfall
-                        console.log(result.car);
                         callback(null, result)
                     }
                     else{
@@ -260,14 +264,13 @@ exports.update = [
                         _id : req.params.id
                     });
                 });
-                console.log(modifiedUser);
                 callback(null,modifiedUser);
             },
         ], async function(err, user){
             if (err) { return next(err); }
             else{
                     modifiedUser = await user;
-                User.findByIdAndUpdate(req.params.id, modifiedUser, {}, function(err){
+                    User.findByIdAndUpdate(req.params.id, modifiedUser, {}, function(err){
                     if(err){return next(err);}
                     res.json({
                         "updatedUser" : buildUser(modifiedUser)
@@ -276,6 +279,69 @@ exports.update = [
             }
         })
     }
+]
+
+exports.login = [
+    body('email','the email address is invalid!').isEmail().escape(),
+    body('password','the password must be at least 8 characters').trim().isLength({min:8}).escape(),
+    (req, res, next) =>{
+        async.waterfall([
+            function(callback){
+                // Extract the validation errors from a request.
+                const errors = validationResult(req);
+                if(!errors.isEmpty()){
+                    // There are errors. Render form again with sanitized values/errors messages.
+                    res.json({
+                        errors
+                    });
+                    return;
+                }
+                else{
+                    callback(null)
+                }
+            },
+
+            function(callback){
+                User.findOne({email:req.body.email}, function(err, user){
+                    if(err) {return next(err)};
+                    if(user){
+                        callback(null, user);
+                    }
+                    else{
+                        res.json({
+                            message: 'Email or Password invalid! Please check it again!',
+                        })
+                    }
+                })
+            },
+
+            function (dbUser, callback){
+                checkPassword(req.body.password, dbUser.password).then(function(result){
+                    callback(null,dbUser, result);
+                });
+            },
+
+            function(dbUser, checkResult, callback){
+                if(checkResult){
+                    callback(null, dbUser);
+                }else{
+                    res.json({
+                        message: 'Email or Password invalid! Please check it again!',
+                    });
+                }
+            },
+
+        ], async function(err, user){
+            if (err) { return next(err); }
+            else{
+                    res.json({
+                        user: buildUser(user),
+                    })
+            }
+        })
+
+    }
+
 ]
 
 
