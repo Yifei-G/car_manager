@@ -23,8 +23,8 @@ function buildUser (dbData){
                 // when getting a detail of a user,
                 // car info will be populated
                 // so car will be a list of objects
-                car.carBrand = model.carBrand;
-                car.carModel = model.carModel;
+                //car.carBrand = model.carBrand;
+                //car.carModel = model.carModel;
                 car.URL = model.URL;
                 car.fullName = model.fullName;
                 
@@ -302,7 +302,9 @@ exports.login = [
             },
 
             function(callback){
-                User.findOne({email:req.body.email}, function(err, user){
+                User.findOne({email:req.body.email})
+                .populate('car','carBrand carModel')
+                .exec(function(err, user){
                     if(err) {return next(err)};
                     if(user){
                         callback(null, user);
