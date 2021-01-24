@@ -25,6 +25,7 @@ function buildUser (dbData){
                 // so car will be a list of objects
                 //car.carBrand = model.carBrand;
                 //car.carModel = model.carModel;
+                car.ID = model._id;
                 car.URL = model.URL;
                 car.fullName = model.fullName;
                 
@@ -50,7 +51,7 @@ async function checkPassword(userPassword, hashedPassword){
 
 exports.userDetail = function(req, res, next){
     User.findById(req.params.id)
-    .populate('car','carBrand carModel')
+    .populate('car','_id carBrand carModel')
     .exec(function(err, result){
         if(err) {return next(err)};
         if(result){
@@ -303,7 +304,7 @@ exports.login = [
 
             function(callback){
                 User.findOne({email:req.body.email})
-                .populate('car','carBrand carModel')
+                .populate('car','_id carBrand carModel')
                 .exec(function(err, user){
                     if(err) {return next(err)};
                     if(user){
