@@ -8,6 +8,7 @@ function buildUser (dbData){
     let user = {};
     let car = {};
     let carList = [];
+    user.ID = dbData._id;
     user.firstName = dbData.firstName;
     user.lastName = dbData.lastName;
     user.email = dbData.email;
@@ -166,7 +167,7 @@ exports.update = [
     body('firstName', 'first name can not be empty').trim().isLength({min:1}).escape(),
     body('lastName', 'last name can not be empty').trim().isLength({min:1}).escape(),
     body('email','the email address is invalid!').isEmail().escape(),
-    body('password','the password must be at least 8 characters').trim().isLength({min:8}).escape(),
+    body('password','the password must be at least 8 characters').optional({checkFalsy:true}).trim().isLength({min:8}).escape(),
     body('gender', 'gender is invalid').optional({checkFalsy:true}).trim().isLength({min:1}).escape(),
     body('car.*').escape(),
     
@@ -253,24 +254,38 @@ exports.update = [
             
             // updating all the field of the User object
             function(dbUser, callback){
-                //hashing user's password
-                const modifiedUser = passwordHash(req.body.password).then(function(hashedPassword){
-                    return new User({
+                //only do the hashing if user has modifed the password
+                if(req.body.password){
+                    const modifiedUser = passwordHash(req.body.password).then(function(hashedPassword){
+                        return new User({
+                            firstName: req.body.firstName,
+                            lastName: req.body.lastName,
+                            email: req.body.email,
+                            password: hashedPassword,
+                            gender: req.body.gender,
+                            car : dbUser.car,
+                            _id : req.params.id
+                        });
+                    });
+                    callback(null,modifiedUser);
+                //otherwise, we use generate a user object without modifying the password property
+                }else{
+                    const modifiedUser = new User({
                         firstName: req.body.firstName,
                         lastName: req.body.lastName,
                         email: req.body.email,
-                        password: hashedPassword,
                         gender: req.body.gender,
                         car : dbUser.car,
                         _id : req.params.id
                     });
-                });
-                callback(null,modifiedUser);
+                    callback(null,modifiedUser);
+                }
+
             },
         ], async function(err, user){
             if (err) { return next(err); }
-            else{
-                    modifiedUser = await user;
+            else{   
+                    req.body.password ? modifiedUser = await user : modifiedUser = user;
                     User.findByIdAndUpdate(req.params.id, modifiedUser, {}, function(err){
                     if(err){return next(err);}
                     res.json({
