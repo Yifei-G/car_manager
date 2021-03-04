@@ -5,7 +5,7 @@ var cors = require('cors');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-var dotenv = require('dotenv/config')
+var dotenv = require('dotenv/config');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 //Import routes for "cars" area of site
